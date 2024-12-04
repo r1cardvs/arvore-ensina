@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Árvore Binária com Vue</title>
+  <style>
+    .node {
+      fill: black;
+      stroke: white;
+      stroke-width: 2;
+    }
+    .text {
+      fill: white;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
+    .line {
+      stroke: black;
+      stroke-width: 2;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container mt-4">
+    <h1 class="text-center mb-4">Árvore Binária</h1>
+    <div class="row mb-3">
+      <div class="col-md-5">
+        <input type="number" v-model.number="novoValor" class="form-control" placeholder="Digite um valor para adicionar">
+      </div>
+      <div class="col-md-2 d-grid">
+        <button class="btn btn-primary" @click="adicionar">Adicionar</button>
+      </div>
+      <div class="col-md-5">
+        <input type="number" v-model.number="valorRemover" class="form-control" placeholder="Digite um valor para remover">
+      </div>
+      <div class="col-md-2 d-grid">
+        <button class="btn btn-danger" @click="remover">Remover</button>
+      </div>
+    </div>
+    <svg width="100%" height="500" style="border: 1px solid black;">
+      <g v-if="raiz">
+        <node 
+          :x="500" 
+          :y="50" 
+          :no="raiz" 
+          :parentX="null" 
+          :parentY="null" 
+          :depth="0"
+        ></node>
+      </g>
+    </svg>
+  </div>
+
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          raiz: null,
+          novoValor: null,
+          valorRemover: null
+        };
+      },
+      methods: {
+        adicionar() {
+          if (this.novoValor !== null) {
+            this.raiz = this.adicionarRecursivo(this.raiz, this.novoValor);
+            this.novoValor = null;
+          }
+        },
+        adicionarRecursivo(no, valor) {
+          if (!no) {
+            return { valor, noEsquerdo: null, noDireito: null };
+          }
+          if (valor < no.valor) {
+            no.noEsquerdo = this.adicionarRecursivo(no.noEsquerdo, valor);
+          } else {
+            no.noDireito = this.adicionarRecursivo(no.noDireito, valor);
+          }
+          return no;
+        },
+        remover() {
+          if (this.valorRemover !== null) {
+            this.raiz = this.removerRecursivo(this.raiz, this.valorRemover);
+            this.valorRemover = null;
+          }
+        },
+        removerRecursivo(no, valor) {
+          if (!no) return null;
+          if (valor < no.valor) {
+            no.noEsquerdo = this.removerRecursivo(no.noEsquerdo, valor);
+          } else if (valor > no.valor) {
+            no.noDireito = this.removerRecursivo(no.noDireito, valor);
+          } else {
+            if (!no.noEsquerdo) return no.noDireito;
+            if (!no.noDireito) return no.noEsquerdo;
+
+            let sucessor = this.getMin(no.noDireito);
+            no.valor = sucessor.valor;
+            no.noDireito = this.removerRecursivo(no.noDireito, sucessor.valor);
+          }
+          return no;
+        },
+        getMin(no) {
+          while (no.noEsquerdo) {
+            no = no.noEsquerdo;
+          }
+          return no;
+        }
+      }
+    });
+
+    app.component('node', {
+      props: ['x', 'y', 'no', 'parentX', 'parentY', 'depth'],
+      template: `
+        <g>
+          <!-- Só desenhe a linha se houver um nó pai -->
+          <line v-if="parentX !== null && parentY !== null" 
+            :x1="parentX" 
+            :y1="parentY" 
+            :x2="x" 
+            :y2="y" 
+            class="line" />
+          <g>
+            <circle :cx="x" :cy="y" r="20" class="node" />
+            <text :x="x" :y="y + 5" text-anchor="middle" class="text">{{ no.valor }}</text>
+          </g>
+          <node 
+            v-if="no.noEsquerdo" 
+            :x="x - 200 / Math.pow(2, depth)" 
+            :y="y + 70" 
+            :no="no.noEsquerdo" 
+            :parentX="x" 
+            :parentY="y" 
+            :depth="depth + 1"
+          ></node>
+          <node 
+            v-if="no.noDireito" 
+            :x="x + 200 / Math.pow(2, depth)" 
+            :y="y + 70" 
+            :no="no.noDireito" 
+            :parentX="x" 
+            :parentY="y" 
+            :depth="depth + 1"
+          ></node>
+        </g>
+      `
+    });
+
+    app.mount('#app');
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
